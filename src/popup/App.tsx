@@ -1,28 +1,28 @@
 import { useEffect, useState } from 'react';
 import * as Switch from '@radix-ui/react-switch';
 import { features } from '../features/registry';
-import { storage } from '../utils/storage';
+import { storage, FeatureStateMap, FeatureSettingsMap } from '../utils/storage';
+import { FeatureSettingValue } from '../types';
 import { cn } from '../utils/cn';
 
 function App() {
-    const [featureStates, setFeatureStates] = useState<{ [key: string]: boolean }>({});
-    const [featureSettings, setFeatureSettings] = useState<{ [key: string]: any }>({});
+    const [featureStates, setFeatureStates] = useState<FeatureStateMap>({});
+    const [featureSettings, setFeatureSettings] = useState<FeatureSettingsMap>({});
 
     useEffect(() => {
         async function loadData() {
-            // Load States
-            const states: { [key: string]: boolean } = {};
-            const settingsMap: { [key: string]: any } = {};
-
             const storedStates = await storage.getFeatureStates();
             const storedSettings = await storage.getFeatureSettingsAll();
 
+            const initialStates: FeatureStateMap = {};
+            const initialSettings: FeatureSettingsMap = {};
+
             for (const feature of features) {
-                states[feature.id] = storedStates[feature.id] ?? feature.initialState;
-                settingsMap[feature.id] = storedSettings[feature.id] || {};
+                initialStates[feature.id] = storedStates[feature.id] ?? feature.initialState;
+                initialSettings[feature.id] = storedSettings[feature.id] || {};
             }
-            setFeatureStates(states);
-            setFeatureSettings(settingsMap);
+            setFeatureStates(initialStates);
+            setFeatureSettings(initialSettings);
         }
         loadData();
     }, []);
@@ -32,7 +32,7 @@ function App() {
         await storage.setFeatureState(featureId, newState);
     };
 
-    const updateSetting = async (featureId: string, key: string, value: any) => {
+    const updateSetting = async (featureId: string, key: string, value: FeatureSettingValue) => {
         setFeatureSettings((prev) => ({
             ...prev,
             [featureId]: {
@@ -96,19 +96,19 @@ function App() {
                                                         <div className="relative h-6 w-6 overflow-hidden rounded-full border border-gray-200 shadow-sm">
                                                             <input
                                                                 type="color"
-                                                                value={currentValue}
+                                                                value={currentValue as string}
                                                                 onChange={(e) => updateSetting(feature.id, setting.key, e.target.value)}
                                                                 className="absolute -top-1/2 -left-1/2 h-[200%] w-[200%] cursor-pointer p-0 opacity-100"
                                                             />
                                                         </div>
-                                                        <span className="font-mono text-xs text-gray-600 uppercase">{currentValue}</span>
+                                                        <span className="font-mono text-xs text-gray-600 uppercase">{currentValue as string}</span>
                                                     </div>
                                                 )}
 
                                                 {setting.type === 'text' && (
                                                     <input
                                                         type="text"
-                                                        value={currentValue}
+                                                        value={currentValue as string}
                                                         onChange={(e) => updateSetting(feature.id, setting.key, e.target.value)}
                                                         className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                                     />

@@ -1,25 +1,34 @@
 import { Feature } from '../types';
 
-// Auto-register all features using Vite's glob import
-// It matches any 'index.ts' inside 'src/features/*' (subdirectories)
-// eager: true ensures they are included in the bundle directly
-const modules = import.meta.glob<Record<string, Feature>>('./*/index.ts', {
+// Type guard to check if an object is a Feature
+function isFeature(obj: unknown): obj is Feature {
+    return (
+        typeof obj === 'object' &&
+        obj !== null &&
+        'id' in obj &&
+        'name' in obj &&
+        'matches' in obj &&
+        'execute' in obj
+    );
+}
+
+const modules = import.meta.glob('./*/index.ts', {
     eager: true,
-    import: 'default' // We assume default export, but we'll check named exports too if needed
+    import: 'default'
 });
 
-export const features: Feature[] = Object.values(modules).flatMap((module: any) => {
-    // If the module default export is the Feature object
-    if (module.default && module.default.id) {
-        return [module.default];
+export const features: Feature[] = Object.values(modules).flatMap((module: unknown) => {
+    // If the module itself is the feature (default export)
+    if (isFeature(module)) {
+        return [module];
     }
-    // If the module exports the Feature object as a named export (fallback)
-    // We search for any export that looks like a Feature
-    const validFeatures = Object.values(module).filter((exp: any) =>
-        exp && typeof exp === 'object' && 'id' in exp && 'execute' in exp
-    ) as Feature[];
 
-    return validFeatures;
+    // If it's a module object with named exports, we might need different logic
+    // But since we use import: 'default', 'module' here IS the default export.
+    // If for some reason we need to support named exports, we'd need to change glob import.
+    // For now, consistent usage of 'export default' is enforced by this logic.
+
+    return [];
 });
 
 console.log('[Extension] Loaded features:', features.map(f => f.id));

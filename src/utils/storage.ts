@@ -1,3 +1,5 @@
+import { FeatureSettingValue } from '../types';
+
 const STATE_KEY = 'feature_states';
 const SETTINGS_KEY = 'feature_settings';
 
@@ -6,7 +8,7 @@ export interface FeatureStateMap {
 }
 
 export interface FeatureSettingsMap {
-    [featureId: string]: any;
+    [featureId: string]: Record<string, FeatureSettingValue>;
 }
 
 export const storage = {
@@ -44,12 +46,12 @@ export const storage = {
         return {};
     },
 
-    async getFeatureSettings(featureId: string): Promise<any> {
+    async getFeatureSettings<T = Record<string, FeatureSettingValue>>(featureId: string): Promise<T> {
         const allSettings = await this.getFeatureSettingsAll();
-        return allSettings[featureId] || {};
+        return (allSettings[featureId] as T) || ({} as T);
     },
 
-    async setFeatureSetting(featureId: string, key: string, value: any): Promise<void> {
+    async setFeatureSetting(featureId: string, key: string, value: FeatureSettingValue): Promise<void> {
         if (typeof chrome !== 'undefined' && chrome.storage) {
             const allSettings = await this.getFeatureSettingsAll();
             if (!allSettings[featureId]) allSettings[featureId] = {};

@@ -1,15 +1,16 @@
 export type FeatureSettingType = 'color' | 'text' | 'boolean' | 'number';
 
+export type FeatureSettingValue = string | number | boolean;
+
 export interface FeatureSetting {
     key: string;
     type: FeatureSettingType;
     label: string;
-    defaultValue: any;
+    defaultValue: FeatureSettingValue;
     description?: string;
-    // Options for select/radio, min/max for number, etc. could be added here
 }
 
-export interface Feature<T = any> {
+export interface Feature<T = Record<string, FeatureSettingValue>> {
     id: string;
     name: string;
     description: string;
