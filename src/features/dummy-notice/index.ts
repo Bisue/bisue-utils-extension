@@ -8,6 +8,7 @@ export const dummyNoticeFeature: Feature = {
     initialState: true,
     execute: () => {
         const banner = document.createElement('div');
+        banner.id = 'dummy-notice-banner';
         banner.innerText = 'Chrome Extension Active: 더미 알림 기능 실행 중';
         banner.style.position = 'fixed';
         banner.style.top = '0';
@@ -20,5 +21,11 @@ export const dummyNoticeFeature: Feature = {
         banner.style.zIndex = '999999';
         banner.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
         document.body.appendChild(banner);
+    },
+    cleanup: () => {
+        const banner = document.getElementById('dummy-notice-banner');
+        if (banner) {
+            banner.remove();
+        }
     },
 };

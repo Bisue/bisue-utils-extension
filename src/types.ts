@@ -10,4 +10,9 @@ export interface Feature {
     matches: (string | RegExp)[];
     initialState: boolean;
     execute: () => void | Promise<void>;
+    /**
+     * Called when the feature is disabled.
+     * Use this to remove DOM elements or event listeners added by execute.
+     */
+    cleanup?: () => void | Promise<void>;
 }
