@@ -23,5 +23,8 @@ export default defineConfig(({ mode }) => {
             outDir: 'dist',
             emptyOutDir: false, // Don't clear dist, as main build runs first
         },
+        define: {
+            'process.env.NODE_ENV': JSON.stringify(isDev ? 'development' : 'production'),
+        },
     };
 });
