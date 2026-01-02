@@ -122,6 +122,23 @@ function App() {
                                                         className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                                     />
                                                 )}
+
+                                                {setting.type === 'range' && (
+                                                    <div className="flex items-center gap-3">
+                                                        <input
+                                                            type="range"
+                                                            min={setting.min}
+                                                            max={setting.max}
+                                                            step={setting.step}
+                                                            value={currentValue as number}
+                                                            onChange={(e) => updateSetting(feature.id, setting.key, Number(e.target.value))}
+                                                            className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-indigo-600"
+                                                        />
+                                                        <span className="min-w-[3ch] text-right font-mono text-xs text-gray-600">
+                                                            {currentValue as number}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
                                         );
                                     })}

@@ -1,6 +1,6 @@
 import { ComponentType } from 'react';
 
-export type FeatureSettingType = 'color' | 'text' | 'boolean' | 'number';
+export type FeatureSettingType = 'color' | 'text' | 'boolean' | 'number' | 'range';
 
 export type FeatureSettingValue = string | number | boolean;
 
@@ -10,6 +10,9 @@ export interface FeatureSetting {
     label: string;
     defaultValue: FeatureSettingValue;
     description?: string;
+    min?: number;
+    max?: number;
+    step?: number;
 }
 
 export interface Feature<T = Record<string, FeatureSettingValue>> {
