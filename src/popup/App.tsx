@@ -113,6 +113,15 @@ function App() {
                                                         className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                                     />
                                                 )}
+
+                                                {setting.type === 'number' && (
+                                                    <input
+                                                        type="number"
+                                                        value={currentValue as number}
+                                                        onChange={(e) => updateSetting(feature.id, setting.key, Number(e.target.value))}
+                                                        className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                    />
+                                                )}
                                             </div>
                                         );
                                     })}
