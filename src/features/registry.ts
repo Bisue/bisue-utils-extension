@@ -8,7 +8,7 @@ function isFeature(obj: unknown): obj is Feature {
         'id' in obj &&
         'name' in obj &&
         'matches' in obj &&
-        'execute' in obj
+        ('execute' in obj || 'component' in obj)
     );
 }
 
