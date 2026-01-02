@@ -1,24 +1,73 @@
+import { createRoot, Root } from 'react-dom/client';
+import React from 'react';
 import { features } from '../features/registry';
 import { storage, FeatureStateMap, FeatureSettingsMap } from '../utils/storage';
 import { isUrlMatched } from '../utils/url-matcher';
 import { Feature } from '../types';
+import { createShadowWrapper, removeShadowWrapper } from '../utils/dom';
+import styles from '../index.css?inline';
 
 const activeFeatures = new Set<string>();
+const activeRoots = new Map<string, Root>();
 
 async function toggleFeature(feature: Feature, shouldEnable: boolean) {
     if (shouldEnable) {
         // Enable or Update
         const settings = await storage.getFeatureSettings(feature.id);
-        console.log(`[Extension] Executing feature: ${feature.name} with settings:`, settings);
-        await feature.execute(settings);
+        console.log(`[Extension] Executing feature: ${feature.name}`);
+
+        // 1. Handle 'execute' function
+        if (feature.execute) {
+            await feature.execute(settings);
+        }
+
+        // 2. Handle React Component
+        if (feature.component) {
+            // Create Shadow DOM wrapper
+            const wrapperId = `${feature.id}-root`;
+            // Check if already exists (for updates)
+            let { shadowRoot, container } = createShadowWrapper(wrapperId);
+
+            // Inject Styles (Tailwind) if not present
+            if (!shadowRoot.querySelector('style[data-extension-styles]')) {
+                const styleTag = document.createElement('style');
+                styleTag.setAttribute('data-extension-styles', '');
+                styleTag.textContent = styles;
+                shadowRoot.appendChild(styleTag);
+            }
+
+            // Render React Component
+            let root = activeRoots.get(feature.id);
+            if (!root) {
+                root = createRoot(container);
+                activeRoots.set(feature.id, root);
+            }
+
+            const Component = feature.component;
+            root.render(React.createElement(Component, { settings }));
+        }
+
         activeFeatures.add(feature.id);
     } else {
         // Disable
         if (activeFeatures.has(feature.id)) {
             console.log(`[Extension] Disabling feature: ${feature.name}`);
-            if (feature.cleanup) {
+
+            // 1. Cleanup 'execute' logic
+            if (feature.execute && feature.cleanup) {
                 await feature.cleanup();
             }
+
+            // 2. Cleanup React Component
+            if (feature.component) {
+                const root = activeRoots.get(feature.id);
+                if (root) {
+                    root.unmount();
+                    activeRoots.delete(feature.id);
+                }
+                removeShadowWrapper(`${feature.id}-root`);
+            }
+
             activeFeatures.delete(feature.id);
         }
     }
@@ -59,9 +108,9 @@ async function init() {
             for (const feature of features) {
                 if (activeFeatures.has(feature.id)) {
                     if (newSettingsMap[feature.id]) {
-                        const settings = newSettingsMap[feature.id];
-                        console.log(`[Extension] Settings updated for ${feature.name}`, settings);
-                        await feature.execute(settings);
+                        // If settings changed, re-execute/re-render
+                        // toggleFeature handles "update" logic when passed true
+                        toggleFeature(feature, true);
                     }
                 }
             }

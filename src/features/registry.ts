@@ -12,7 +12,7 @@ function isFeature(obj: unknown): obj is Feature {
     );
 }
 
-const modules = import.meta.glob('./*/index.ts', {
+const modules = import.meta.glob('./*/index.{ts,tsx}', {
     eager: true,
     import: 'default'
 });
