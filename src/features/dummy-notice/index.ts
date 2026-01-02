@@ -1,6 +1,12 @@
 import { Feature } from '../../types';
+import { createShadowWrapper, removeShadowWrapper } from '../../utils/dom';
 
-export const dummyNoticeFeature: Feature = {
+interface DummyNoticeSettings {
+    backgroundColor: string;
+    text: string;
+}
+
+const dummyNoticeFeature: Feature<DummyNoticeSettings> = {
     id: 'dummy-notice',
     name: '더미 알림',
     description: '모든 페이지 상단에 확장프로그램 실행 중임을 알리는 배너를 표시합니다.',
@@ -21,35 +27,32 @@ export const dummyNoticeFeature: Feature = {
         }
     ],
     execute: (settings) => {
-        // Default values fallback
         const bgColor = settings?.backgroundColor || '#ffcc00';
         const text = settings?.text || 'Chrome Extension Active: 더미 알림 기능 실행 중';
 
-        // Check if checks already exists to update it (Real-time update)
-        let banner = document.getElementById('dummy-notice-banner');
-        if (!banner) {
-            banner = document.createElement('div');
-            banner.id = 'dummy-notice-banner';
-            banner.style.position = 'fixed';
-            banner.style.top = '0';
-            banner.style.left = '0';
-            banner.style.width = '100%';
-            banner.style.textAlign = 'center';
-            banner.style.padding = '10px';
-            banner.style.zIndex = '999999';
-            banner.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-            document.body.appendChild(banner);
-        }
+        // Use Shadow DOM wrapper
+        const { container } = createShadowWrapper('dummy-notice-host');
 
-        // Apply dynamic styles/content
+        // We can now safely use innerHTML or appendChild without affecting the main page
+        // And use styles that won't leak out, or be affected by page styles (mostly)
+
+        // Reset container content
+        container.innerHTML = '';
+
+        const banner = document.createElement('div');
         banner.innerText = text;
+        banner.style.width = '100%';
+        banner.style.textAlign = 'center';
+        banner.style.padding = '10px';
         banner.style.backgroundColor = bgColor;
-        banner.style.color = '#000'; // Contrast logic could be added here
+        banner.style.color = '#000';
+        banner.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+
+        container.appendChild(banner);
     },
     cleanup: () => {
-        const banner = document.getElementById('dummy-notice-banner');
-        if (banner) {
-            banner.remove();
-        }
+        removeShadowWrapper('dummy-notice-host');
     },
 };
+
+export default dummyNoticeFeature;

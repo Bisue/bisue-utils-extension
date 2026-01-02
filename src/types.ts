@@ -9,13 +9,13 @@ export interface FeatureSetting {
     // Options for select/radio, min/max for number, etc. could be added here
 }
 
-export interface Feature {
+export interface Feature<T = any> {
     id: string;
     name: string;
     description: string;
     matches: (string | RegExp)[];
     initialState: boolean;
     settingsSchema?: FeatureSetting[];
-    execute: (settings?: any) => void | Promise<void>;
+    execute: (settings?: T) => void | Promise<void>;
     cleanup?: () => void | Promise<void>;
 }
