@@ -1,14 +1,20 @@
-const STORAGE_KEY = 'feature_states';
+const STATE_KEY = 'feature_states';
+const SETTINGS_KEY = 'feature_settings';
 
 export interface FeatureStateMap {
     [featureId: string]: boolean;
 }
 
+export interface FeatureSettingsMap {
+    [featureId: string]: any;
+}
+
 export const storage = {
+    // --- Feature States (On/Off) ---
     async getFeatureStates(): Promise<FeatureStateMap> {
         if (typeof chrome !== 'undefined' && chrome.storage) {
-            const result = await chrome.storage.local.get(STORAGE_KEY);
-            return (result[STORAGE_KEY] as FeatureStateMap) || {};
+            const result = await chrome.storage.local.get(STATE_KEY);
+            return (result[STATE_KEY] as FeatureStateMap) || {};
         }
         return {};
     },
@@ -17,7 +23,7 @@ export const storage = {
         if (typeof chrome !== 'undefined' && chrome.storage) {
             const states = await this.getFeatureStates();
             states[featureId] = isEnabled;
-            await chrome.storage.local.set({ [STORAGE_KEY]: states });
+            await chrome.storage.local.set({ [STATE_KEY]: states });
         }
     },
 
@@ -28,4 +34,28 @@ export const storage = {
         }
         return defaultState;
     },
+
+    // --- Feature Settings (Custom Values) ---
+    async getFeatureSettingsAll(): Promise<FeatureSettingsMap> {
+        if (typeof chrome !== 'undefined' && chrome.storage) {
+            const result = await chrome.storage.local.get(SETTINGS_KEY);
+            return (result[SETTINGS_KEY] as FeatureSettingsMap) || {};
+        }
+        return {};
+    },
+
+    async getFeatureSettings(featureId: string): Promise<any> {
+        const allSettings = await this.getFeatureSettingsAll();
+        return allSettings[featureId] || {};
+    },
+
+    async setFeatureSetting(featureId: string, key: string, value: any): Promise<void> {
+        if (typeof chrome !== 'undefined' && chrome.storage) {
+            const allSettings = await this.getFeatureSettingsAll();
+            if (!allSettings[featureId]) allSettings[featureId] = {};
+
+            allSettings[featureId][key] = value;
+            await chrome.storage.local.set({ [SETTINGS_KEY]: allSettings });
+        }
+    }
 };

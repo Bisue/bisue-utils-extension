@@ -1,18 +1,21 @@
+export type FeatureSettingType = 'color' | 'text' | 'boolean' | 'number';
+
+export interface FeatureSetting {
+    key: string;
+    type: FeatureSettingType;
+    label: string;
+    defaultValue: any;
+    description?: string;
+    // Options for select/radio, min/max for number, etc. could be added here
+}
+
 export interface Feature {
     id: string;
     name: string;
     description: string;
-    /**
-     * List of URL patterns to match.
-     * Can be a simple string (substring match) or a RegExp.
-     * If empty, it matches all URLs (use carefully).
-     */
     matches: (string | RegExp)[];
     initialState: boolean;
-    execute: () => void | Promise<void>;
-    /**
-     * Called when the feature is disabled.
-     * Use this to remove DOM elements or event listeners added by execute.
-     */
+    settingsSchema?: FeatureSetting[];
+    execute: (settings?: any) => void | Promise<void>;
     cleanup?: () => void | Promise<void>;
 }
