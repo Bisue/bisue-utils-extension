@@ -49,19 +49,19 @@ React, TypeScript, Vite를 기반으로 하며, 높은 유지보수성과 확장
 
 ```
 src/
-├── features/            # [핵심] 모든 기능 모듈이 위치하는 곳
+├── features/            # [핵심] 모든 기능 모듈이 위치하는 곳 (자동 등록됨)
 │   ├── dummy-notice/    # 개별 기능 폴더 (예시)
 │   │   └── index.ts     # 기능 정의 (Feature 인터페이스 구현)
-│   └── registry.ts      # 기능 등록소 (활성화할 기능을 리스트업)
+│   └── registry.ts      # 기능 레지스트리 (import.meta.glob 사용)
 ├── content/             # Content Script 진입점 (URL 매칭 및 기능 실행 담당)
 ├── popup/               # 팝업 UI (기능 목록 및 설정 UI 자동 렌더링)
 ├── background/          # Background Service Worker
-└── utils/               # 공용 유틸리티 (Storage, URL Matcher 등)
+└── utils/               # 공용 유틸리티 (Storage, URL Matcher, Shadow DOM 등)
 ```
 
 ### 핵심 개념: Feature Registry 패턴
 - 모든 기능은 `src/features/` 아래에 독립적인 모듈로 존재합니다.
-- `content/index.ts`는 현재 URL을 확인하고, 매칭되는 기능만 동적으로 실행합니다.
+- **자동 등록**: `src/features` 폴더에 `index.ts` 파일을 생성하면 자동으로 감지됩니다.
 - `popup/App.tsx`는 등록된 기능을 읽어 설정 UI(On/Off 스위치, 옵션 입력 폼)를 자동으로 생성합니다.
 
 ## ✨ 새로운 기능 추가하기 (How to Contribute)
@@ -72,12 +72,18 @@ src/
 `src/features/` 아래에 새 폴더를 만들고 `index.ts`를 생성합니다.
 
 ### 2단계: 인터페이스 구현
-`Feature` 인터페이스에 맞춰 기능을 정의합니다.
+`Feature<SettingsType>` 제네릭 인터페이스에 맞춰 기능을 정의하고, `createShadowWrapper`로 스타일을 격리합니다.
 
 ```typescript
 import { Feature } from '../../types';
+import { createShadowWrapper, removeShadowWrapper } from '../../utils/dom';
 
-export const myNewFeature: Feature = {
+// 1. 설정 타입 정의 (Type-Safety)
+interface MySettings {
+  bgColor: string;
+}
+
+const myNewFeature: Feature<MySettings> = {
   id: 'my-feature-id',       // 고유 ID
   name: 'My New Feature',    // UI에 표시될 이름
   description: '이 기능은 이러이러한 동작을 합니다.',
@@ -96,32 +102,33 @@ export const myNewFeature: Feature = {
 
   // 기능 실행 로직
   execute: (settings) => {
+    // 자동완성 지원
     const color = settings?.bgColor || '#ffffff';
-    // DOM 조작, 이벤트 리스너 등록 등...
-    console.log('Feature Executed with color:', color);
+    
+    // 2. 스타일 격리 (Shadow DOM 사용)
+    const { container } = createShadowWrapper('my-feature-host');
+    
+    const element = document.createElement('div');
+    element.style.backgroundColor = color;
+    element.innerText = "Hello Isolated World!";
+    
+    container.appendChild(element);
   },
 
   // (중요) 기능 종료/정리 로직
   // 사용자가 기능을 끄거나 설정을 바꿨을 때 호출됩니다.
   cleanup: () => {
-    // 등록한 이벤트 리스너 제거, 생성한 DOM 삭제 등
+    // 3. Shadow DOM 제거 유틸리티 사용
+    removeShadowWrapper('my-feature-host');
   }
 };
+
+// 4. default export 필수 (자동 등록을 위함)
+export default myNewFeature;
 ```
 
-### 3단계: 레지스트리 등록
-`src/features/registry.ts` 파일을 열어 배열에 추가합니다.
-
-```typescript
-import { myNewFeature } from './my-new-feature';
-
-export const features: Feature[] = [
-  // ... 기존 기능들
-  myNewFeature, // 추가
-];
-```
-
-이제 저장하고 빌드(`pnpm build:dev`)하면 자동으로 적용됩니다!
+### 3단계: 완료!
+별도의 등록 절차 없이 저장하고 빌드(`pnpm build:dev`)하면 자동으로 적용됩니다!
 
 ## 🐞 디버깅 가이드
 
